@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1370127140 source:d:\users\eduardo\my documents\c++ files\changecalc\main.cpp
+	<iostream>
+	<math.h>
+
