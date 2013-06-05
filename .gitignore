@@ -1,9 +1,9 @@
 #################
 ## Codeblocks
 #################
-.cpb
-.depend
-.layout
+*.cbp
+*.depend
+*.layout
 
 #################
 ## Eclipse
