@@ -37,7 +37,7 @@ inline std::string to_string(const T& t)
     return ss.str();
 }
 
-void getWorkers(std::vector<Worker> &vac_Workers, int num_schd)
+void getWorkers(std::vector<Worker> &vac_Workers, unsigned long int num_schd)
 {
     Worker Temp;
     int vLst;
@@ -51,7 +51,7 @@ void getWorkers(std::vector<Worker> &vac_Workers, int num_schd)
     }
 }
 
-void keepOnlyVacWork(std::vector<Worker> &vac_Workers, int num_schd, int vacDay)
+void keepOnlyVacWork(std::vector<Worker> &vac_Workers, unsigned long int num_schd, int vacDay)
 {
     for(int i = 0; i < num_schd; i++)
     {
@@ -63,13 +63,17 @@ void keepOnlyVacWork(std::vector<Worker> &vac_Workers, int num_schd, int vacDay)
 
 int main()
 {
-    int num_vac_sch;
+    unsigned long int num_vac_sch;
     int tstDay;
     int vLst;
     int FNum;
     int chainLen;
+    int fwdPass;
+    bool workMultCheck = true;
+    bool newFwdFound;
     bool skipi;
-    bool infLoop = 0;
+    bool infLoop = false;
+    bool chainDone;
     int maxChainLen = 0;
     int numfwdCalls = 0;
     Worker Temp;
@@ -97,7 +101,10 @@ int main()
         //Initialize some Values
         thisChain.str("");
         skipi = false;
+        chainDone = false;
+        workMultCheck = false;
         chainLen = 0;
+        fwdPass = 0;
         //Initial forwarding
         FNum = vacWorkers[i].fwdNum;
 
@@ -119,7 +126,6 @@ int main()
         //Otherwise create a new chain
         AddZeros(thisChain, vacWorkers[i].myNum);
 
-
         thisChain << vacWorkers[i].myNum << "->";
         AddZeros(thisChain, vacWorkers[i].fwdNum);
         thisChain << vacWorkers[i].fwdNum;
@@ -127,34 +133,52 @@ int main()
         chainLen++;
         numfwdCalls++;
 
-        //Follow this chain
-        for(int j = 0; j < num_vac_sch; j++)
+        while(!chainDone)
         {
-            if(vacWorkers[j].myNum == FNum)
+            newFwdFound = false;
+
+            //Follow this chain
+            for(int j = 0; j < num_vac_sch; j++)
             {
-                FNum = vacWorkers[j].fwdNum;
+                if(vacWorkers[j].myNum == FNum)
+                {
+                    FNum = vacWorkers[j].fwdNum;
 
-                //If FNum is already in this chain then we have an inf loop
-                found = thisChain.str().find(to_string(FNum));
-                if(found != std::string::npos)
-                    infLoop = true;
+                    //If FNum is already in this chain then we have an inf loop
+                    found = thisChain.str().find(to_string(FNum));
+                    if(found != std::string::npos)
+                        infLoop = true;
 
-                thisChain << "->";
-                AddZeros(thisChain, FNum);
+                    thisChain << "->";
+                    AddZeros(thisChain, FNum);
 
-                thisChain << FNum;
-                chainLen++;
-                numfwdCalls++;
+                    //If the forwardings have already been passed over once
+                    // Then we've found a new forwarding and should try again
+                    if(!newFwdFound && workMultCheck)
+                        newFwdFound = true;
+
+                    thisChain << FNum;
+                    chainLen++;
+                    numfwdCalls++;
+                }
             }
-        }
 
-        if(infLoop)
-        {
-            std::cout << "Infinite Loop: " << thisChain.str();
-            return 0;
-        }
+            if(infLoop)
+            {
+                std::cout << "Infinite Loop: " << thisChain.str();
+                return 0;
+            }
 
-        std::cout << thisChain.str() << std::endl;
+            //We've now passsesd over the link once, but we're not done yet
+            workMultCheck = true;
+
+            //If we've gone over the chains a few times and haven't found
+            // a new forwarding number then we're done
+            if((fwdPass != 0) && !newFwdFound)
+                chainDone = true;
+
+            fwdPass++;
+        }
 
         chains.push_back(thisChain.str());
 
